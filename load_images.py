@@ -26,7 +26,7 @@ def load(test=False, cols=None):
     # dobranie subsetu kolumn
     if cols:  
         df = df[list(cols) + ['Image']]
-
+ 
     # print(df.count())  # prints the number of values for each column
 
     # usuwanie pustych danych metoda pandowa

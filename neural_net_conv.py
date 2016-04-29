@@ -1,8 +1,6 @@
-# conv-net 
-from load_images import load2d
-
 from lasagne import layers
 from nolearn.lasagne import NeuralNet
+from nolearn.lasagne import BatchIterator
 import pickle 
 import numpy as np
 import sys
@@ -12,19 +10,100 @@ sys.setrecursionlimit(10000)
 
 import theano
 
+import os
+import numpy as np
+from pandas.io.parsers import read_csv
+from sklearn.utils import shuffle
+
+from matplotlib import pyplot
+from orl_faces import OrlFaces
+
+FTRAIN = 'C:/Users/Michal/Documents/magisterka/dane/training.csv'
+FTEST = 'C:/Users/Michal/Documents/magisterka/dane/test.csv'
+
+# to cudo zwracawielowymiarowy array numpy
+def load(test=False, cols=None):
+    """Loads data from FTEST if *test* is True, otherwise from FTRAIN.
+    Pass a list of *cols* if you're only interested in a subset of the
+    target columns.
+    """
+    fname = FTEST if test else FTRAIN
+    # ladowanie danych do dataFrame pandowego 
+    df = read_csv(os.path.expanduser(fname))  
+    # print(df.columns)
+    
+    # print(df['Image'][1])
+    # Kazdy image jest zakodowany jako pixele oddzielone spacja
+    # transformacja do wektora numpy
+    # funckja fromstring robi 1d array z tekstu (po separatorze)
+    df['Image'] = df['Image'].apply(lambda im: np.fromstring(im, sep=' '))
+
+    # dobranie subsetu kolumn
+    if cols:  
+        df = df[list(cols) + ['Image']]
+
+    # print(df.count())  # prints the number of values for each column
+
+    # usuwanie pustych danych metoda pandowa
+    df = df.dropna()  
+   
+    X = np.vstack(df['Image'].values) / 255.  # scale pixel values to [0, 1]
+    X = X.astype(np.float32)
+
+    if not test:  # only FTRAIN has any target columns
+        y = df[df.columns[:-1]].values
+        y = (y - 48) / 48  # scale target coordinates to [-1, 1]
+        X, y = shuffle(X, y, random_state = 42)  # shuffle train data
+        y = y.astype(np.float32)
+    else:
+        y = None
+
+    return X, y
+
+def load2d(test=False, cols=None):
+    X, y = load(test=test)
+    X = X.reshape(-1, 1, 96, 96)
+    return X, y
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 def float32(k):
     return np.cast['float32'](k)
 
-from nolearn.lasagne import BatchIterator
-
-from matplotlib import pyplot
 def plot_sample(x, y, axis):
     img = x.reshape(96, 96)
     axis.imshow(img, cmap='gray')
     axis.scatter(y[0::2] * 48 + 48, y[1::2] * 48 + 48, marker='x', s=10)
-
-
-
 class CustBatchIterator(BatchIterator):
     flip_indices = [
         (0, 2), (1, 3),
@@ -154,9 +233,9 @@ class CustBatchIterator(BatchIterator):
         # rotation_indices = np.array([i for i in range(128)])
         # Xb, yb = self.apply_rotation(Xb,yb, rotation_indices) 
         
-        # offset_indices = np.random.choice(batch_shape, batch_shape / 2  , replace=False) 
-        offset_indices = np.array([i for i in range(128)])
-        Xb, yb = self.offset_image(Xb, yb, offset_indices)        
+        #offset_indices = np.random.choice(batch_shape, batch_shape / 4  , replace=False) 
+        #offset_indices = np.array([i for i in range(128)])
+        # Xb, yb = self.offset_image(Xb, yb, offset_indices)        
 
         #
         #fig = pyplot.figure(figsize=(6, 6))
@@ -177,9 +256,6 @@ class CustBatchIterator(BatchIterator):
 
 
         return Xb, yb
-
-        
-             
 
 class AdjustVariable(object):
     def __init__(self, name, start=0.03, stop=0.001):
@@ -204,37 +280,30 @@ net = NeuralNet(
         ('conv2', layers.Conv2DLayer),
         ('pool2', layers.MaxPool2DLayer),
         ('dropout2', layers.DropoutLayer),  # !
-        ('conv3', layers.Conv2DLayer),
-        ('pool3', layers.MaxPool2DLayer),
-        ('dropout3', layers.DropoutLayer),  # !
         ('hidden4', layers.DenseLayer),
         ('dropout4', layers.DropoutLayer),  # !
         ('hidden5', layers.DenseLayer),
         ('output', layers.DenseLayer),
         ],
     input_shape = (None, 1, 96, 96),
-    conv1_num_filters = 32, conv1_filter_size=(3, 3), 
-    pool1_pool_size=(2, 2),
-    dropout1_p = 0.1,  # !
-    conv2_num_filters=64, conv2_filter_size=(2, 2), pool2_pool_size=(2, 2),
-    dropout2_p = 0.2,  # !
-    conv3_num_filters=128, conv3_filter_size=(2, 2), pool3_pool_size=(2, 2),
-    dropout3_p = 0.3,  # !
+    conv1_num_filters=32, conv1_filter_size=(6, 6), pool1_pool_size=(4, 4),
+    dropout1_p=0.1,  # !
+    conv2_num_filters=64, conv2_filter_size=(4, 4), pool2_pool_size=(4, 4),
+    dropout2_p=0.2,  # !
+
     hidden4_num_units=1000,
-    dropout4_p = 0.5,  # !
     hidden5_num_units=1000,
     output_num_units = 30, output_nonlinearity=None,
-
     update_learning_rate=theano.shared(float32(0.03)),
     update_momentum=theano.shared(float32(0.9)),
-    objective_l2=0.0001, 
+    objective_l2=0.0002, 
     regression=True,
     batch_iterator_train=CustBatchIterator(batch_size=128),
     on_epoch_finished=[
         AdjustVariable('update_learning_rate', start=0.03, stop=0.0001),
         AdjustVariable('update_momentum', start=0.9, stop=0.999),
         ],
-    max_epochs=800,
+    max_epochs=1000,
     verbose=1,
     )
 
@@ -242,64 +311,66 @@ net = NeuralNet(
 #print("images loaded")
 #net.fit(X, y)
 
-#with open('net6.pickle', 'wb') as f:
+#with open('net_bigger_filters_1.pickle', 'wb') as f:
 #    pickle.dump(net, f, -1)
 
 
 ############################################################################################
 
 
-import orl_faces
+# ==============================================================================
+
+orl_faces = OrlFaces()
+
 def load_neural_network(path):
     with open(path, 'rb') as f:
         nnet = pickle.load(f)
     return nnet
+nnet = load_neural_network('net_bigger_filters_1.pickle')
+
+orl_faces.laod_orl_faces_2d_np_arr()
+orl_faces.make_orl_predictions(nnet, reshaped = True)
+#orl_faces.save_orl_predictions('predictions.csv')
+#orl_faces.load_orl_keypoints()
+#orl_faces.calculate_prediction_errors()
 
 
-from matplotlib import pyplot
-def plot_sample(x, y, axis):
-    img = x.reshape(96, 96)
-    axis.imshow(img, cmap='gray')
-    axis.scatter(y[0::2] * 48 + 48, y[1::2] * 48 + 48, marker='x', s=10)
 
 
-orl_faces_reshaped = orl_faces.get_orl_faces_2d_np_arr("C:/Users/Michal/Documents/magisterka/dane/orl_faces/")
-nnet = load_neural_network('net3.pickle')
-orl_faces_predictions = orl_faces.make_orl_predictions(orl_faces_reshaped, nnet)
-orl_faces.plot_orl_predictions(orl_faces_reshaped, orl_faces_predictions, 16, 0)
-orl_faces.plot_orl_predictions(orl_faces_reshaped, orl_faces_predictions, 16, 16)
-orl_faces.plot_orl_predictions(orl_faces_reshaped, orl_faces_predictions, 16, 32)
-orl_faces.plot_orl_predictions(orl_faces_reshaped, orl_faces_predictions, 16, 48)
-orl_faces.plot_orl_predictions(orl_faces_reshaped, orl_faces_predictions, 16, 64)
-orl_faces.plot_orl_predictions(orl_faces_reshaped, orl_faces_predictions, 16, 80)
 
-#X, _ = load2d(test=True)
-#y_pred = nnet.predict(X)
+orl_faces.plot_orl_predictions(True, 16, 0)
+orl_faces.plot_orl_predictions(True, 16, 16)
+orl_faces.plot_orl_predictions(True, 16, 32)
+orl_faces.plot_orl_predictions(True, 16, 48)
+orl_faces.plot_orl_predictions(True, 16, 64)
 
-#fig = pyplot.figure(figsize=(6, 6))
-#fig.subplots_adjust(
-#    left=0, right=1, bottom=0, top=1, hspace=0.05, wspace=0.05)
-#a = 64
-#for i in range(a,a+16):
-#    ax = fig.add_subplot(4, 4, i - a + 1, xticks=[], yticks=[])
-#    plot_sample(X[i], y_pred[i], ax)
+###X, _ = load2d(test=True)
+##y_pred = nnet.predict(X)
+
+##fig = pyplot.figure(figsize=(6, 6))
+##fig.subplots_adjust(
+##    left=0, right=1, bottom=0, top=1, hspace=0.05, wspace=0.05)
+##a = 64
+##for i in range(a,a+16):
+##    ax = fig.add_subplot(4, 4, i - a + 1, xticks=[], yticks=[])
+##    plot_sample(X[i], y_pred[i], ax)
 
 
 #pyplot.show()
 
 
-###print(y_pred[0][0::2] * 48 + 48)
-###print(y_pred[0][1::2] * 48 + 48)
+####print(y_pred[0][0::2] * 48 + 48)
+####print(y_pred[0][1::2] * 48 + 48)
+###pyplot.show()
+##train_loss = np.array([i["train_loss"] for i in net1.train_history_])
+##valid_loss = np.array([i["valid_loss"] for i in net1.train_history_])
+###pyplot.plot(train_loss, linewidth=3, label="train")
+##pyplot.plot(valid_loss, linewidth=3, label="valid")
+##pyplot.grid()
+##pyplot.legend()
+##pyplot.xlabel("epoch")
+##pyplot.ylabel("loss")
+###pyplot.ylim(1e-3, 1e-2)
+##pyplot.yscale("log")
 ##pyplot.show()
-#train_loss = np.array([i["train_loss"] for i in net1.train_history_])
-#valid_loss = np.array([i["valid_loss"] for i in net1.train_history_])
-##pyplot.plot(train_loss, linewidth=3, label="train")
-#pyplot.plot(valid_loss, linewidth=3, label="valid")
-#pyplot.grid()
-#pyplot.legend()
-#pyplot.xlabel("epoch")
-#pyplot.ylabel("loss")
-##pyplot.ylim(1e-3, 1e-2)
-#pyplot.yscale("log")
-#pyplot.show()
-##
+###
