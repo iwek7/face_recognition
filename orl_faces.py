@@ -8,9 +8,6 @@ from lasagne import layers
 from nolearn.lasagne import NeuralNet
 from matplotlib import pyplot
 
-
-
-
 class OrlFaces():
 
     # struktura danych importowanych:
@@ -24,7 +21,9 @@ class OrlFaces():
     # images per person
     NUM_IMAGES = 10
 
-    ORL_FACES_CATALOG = "C:/Users/Michal/Documents/magisterka/dane/orl_faces/"
+    # komputer stacjonarny "C:/Users/Michal/Documents/magisterka/dane/orl_faces/"
+    # laptop prywatny "C:/SciSoft/orl_faces/"
+    ORL_FACES_CATALOG = "C:/SciSoft/orl_faces/"
 
     KEYPOINT_NAMES = [
         "LEFT_EYE_MIDDLE",
@@ -65,24 +64,25 @@ class OrlFaces():
         cols_names =  ['person_id','image_id', 'train', 'image']                    
         orl_images_df = pd.DataFrame(columns=cols_names)
                                  
-        for person in range(1, num_ppl + 1):
+        for person in range(num_ppl):
             # z gory ustalamy co bedzie walidacyjne a co treningowe
             img_subset = ([1 for i in range(num_train)] + 
                         [0 for i in range(num_images - num_train)])
             random.shuffle(img_subset) 
-            for img_idx in range(1, num_images + 1):
-                path = (self.ORL_FACES_CATALOG + file_name + str(person) + "/" + 
-                    str(img_idx) + ".pgm"
+            for img_idx in range(num_images):
+                path = (self.ORL_FACES_CATALOG + file_name + str(person + 1) + "/" + 
+                    str(img_idx + 1) + ".pgm"
                         )
                 # obrazki maja fromat 112x92, siec jest wytrenowana na 96x96
                 # tymczasowe trywialne rozwiazanie : ucinamy nadliczbowe pixele z pionu (po polowie gora i dol)
                 # dodajemy puste (0) paski z lewej i prawej (po 2 z kazdej strony o szerokosci pixela)
+                #image = self.read_pgm(path)
                 image = self.read_pgm(path)[8 : 112 - 8,]
                 image = numpy.insert(image,2,92+numpy.zeros((2,image.shape[0])),1)
                 image = numpy.insert(image,image.shape[1],numpy.zeros((2,image.shape[0])),1)
 
                 orl_images_df= orl_images_df.append(pd.DataFrame(
-                                [[person, img_idx, img_subset[img_idx - 1], image]], 
+                                [[person, img_idx, img_subset[img_idx], image]], 
                                 columns=cols_names))
             
         self.orl_images_df = orl_images_df
@@ -124,18 +124,16 @@ class OrlFaces():
         output_df['image'] = img_indices
         output_df.to_csv(path)                  
 
-
     def plot_sample(self, x, y, axis): 
         img = x.reshape(96, 96)
         axis.imshow(img, cmap='gray')
         axis.scatter(y[0::2] * 48 + 48, y[1::2] * 48 + 48, marker='x', s=10)
 
     # plot predicted points over faces
-    def plot_orl_predictions(self, reshaped = True, limit = 16, start_index = 0):
+    def plot_orl_faces(self, reshaped = True, limit = 16, start_index = 0):
         
         fig = pyplot.figure(figsize=(6, 6))
         fig.subplots_adjust(
-
             left=0, right=1, bottom=0, top=1, hspace=0.05, wspace=0.05)
         for i in range(start_index,start_index+limit):
             ax = fig.add_subplot(4, 4, i - start_index + 1, xticks=[], yticks=[])
@@ -149,7 +147,6 @@ class OrlFaces():
         orl_keypoins_path = "C:/Users/Michal/Documents/magisterka/orl_faces_keypoints.csv"
         self.orl_keypoints = pd.DataFrame.from_csv(orl_keypoins_path)
 
-    
     def calculate_prediction_errors(self):
         
         #print(list(self.orl_keypoints.columns.values))
@@ -167,6 +164,7 @@ class OrlFaces():
         self.MSE_table = pd.DataFrame(columns = keypoints_column_names)
         self.MSE_table['person'] = ppl_indices
         self.MSE_table['image'] = img_indices
+        # tu zle
         self.MSE_table.loc[self.MSE_table['person'] == 1, 'LEFT_EYE_MIDDLE'] = 11
 
         index = ['Row'+str(i) for i in range(1, len(self.orl_predictions)+1)]
