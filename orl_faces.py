@@ -143,9 +143,14 @@ class OrlFaces():
                 self.plot_sample(self.orl_faces[i], self.orl_predictions[i], ax)
         pyplot.show()
 
-    def load_orl_keypoints(self):
-        orl_keypoins_path = "C:/Users/Michal/Documents/magisterka/orl_faces_keypoints.csv"
-        self.orl_keypoints = pd.DataFrame.from_csv(orl_keypoins_path)
+    def load_orl_keypoints(self, path):
+        # lapek C:/Users/iwek/Documents/magisterka/FFM
+        # stacjonarny C:/Users/Michal/Documents/magisterka/orl_faces_keypoints.csv
+        self.orl_keypoints = pd.DataFrame.from_csv(path,index_col=False)
+
+
+    def load_orl_predictions(self, path):
+        self.orl_predictions = pd.DataFrame.from_csv(path)
 
     def calculate_prediction_errors(self):
         
@@ -164,33 +169,41 @@ class OrlFaces():
         self.MSE_table = pd.DataFrame(columns = keypoints_column_names)
         self.MSE_table['person'] = ppl_indices
         self.MSE_table['image'] = img_indices
+
+
+
+        self.orl_predictions = self.orl_predictions.sort_values(by=['person','image'])
+        self.orl_keypoints = self.orl_keypoints.sort_values(by=['person','image'])
+
+        for col in keypoints_column_names:
+            self.MSE_table[col] = (self.orl_keypoints[col] - self.orl_predictions[col])**2
+
+            
         # tu zle
-        self.MSE_table.loc[self.MSE_table['person'] == 1, 'LEFT_EYE_MIDDLE'] = 11
-
-        index = ['Row'+str(i) for i in range(1, len(self.orl_predictions)+1)]
-        predictions_df = pd.DataFrame(
-            data = self.orl_predictions,
-            index = index,
-            columns = keypoints_column_names)
-        predictions_df['person'] = ppl_indices
-        predictions_df['image'] = img_indices
-
-        for person_num in range(self.NUM_PPL):
-            for img_num in range(self.NUM_IMAGES):
-                for keypoit in self.KEYPOINT_NAMES:
-                    self.MSE_table.loc[self.MSE_table['person'] == person_num and 
-                                       self.MSE_table['image'] == img_num, 
-                                       keypoit] = (
-                     predictions_df.loc[predictions_df['person'] == person_num and 
-                                       predictions_df['image'] == img_num][keypoit] -
-                     self.orl_keypoints[ self.orl_keypoints['person'] == person_num and 
-                                        sself.orl_keypoints['image'] == img_num][keypoit]) ** 2
+        #self.MSE_table.loc[self.MSE_table['person'] == 1, 'LEFT_EYE_MIDDLE'] = 11
 
 
+        #self.MSE_table = self.orl_predictions - self.orl_keypoints
 
 
-        print(self.MSE_table.loc[self.MSE_table['person'] == 1])
+        # index = ['Row'+str(i) for i in range(1, len(self.orl_predictions)+1)]
+        # predictions_df = pd.DataFrame(
+        #     data = self.orl_predictions,
+        #     index = index,
+        #     columns = keypoints_column_names)
+        # predictions_df['person'] = ppl_indices
+        # predictions_df['image'] = img_indices
 
+        # for person_num in range(self.NUM_PPL):
+        #     for img_num in range(self.NUM_IMAGES):
+        #         for keypoit in self.KEYPOINT_NAMES:
+        #             self.MSE_table.loc[self.MSE_table['person'] == person_num and 
+        #                                self.MSE_table['image'] == img_num, 
+        #                                keypoit] = (
+        #              predictions_df.loc[predictions_df['person'] == person_num and 
+        #                                predictions_df['image'] == img_num][keypoit] -
+        #              self.orl_keypoints[ self.orl_keypoints['person'] == person_num and 
+        #                                 sself.orl_keypoints['image'] == img_num][keypoit]) ** 2
 
 
 
