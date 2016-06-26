@@ -1,6 +1,7 @@
 from lasagne import layers
 from nolearn.lasagne import NeuralNet
 from nolearn.lasagne import BatchIterator
+from lasagne import nonlinearities
 import pickle 
 import numpy as np
 import sys
@@ -201,28 +202,25 @@ net6 = NeuralNet(
         ('input', layers.InputLayer),
         ('conv1', layers.Conv2DLayer),
         ('pool1', layers.MaxPool2DLayer),
-        ('dropout1', layers.DropoutLayer),  # !
+        ('dropout1', layers.DropoutLayer),
         ('conv2', layers.Conv2DLayer),
         ('pool2', layers.MaxPool2DLayer),
-        ('dropout2', layers.DropoutLayer),  # !
-        ('conv3', layers.Conv2DLayer),
-        ('pool3', layers.MaxPool2DLayer),
-        ('dropout3', layers.DropoutLayer),  # !
+        ('dropout2', layers.DropoutLayer), 
+        
         ('hidden4', layers.DenseLayer),
-        ('dropout4', layers.DropoutLayer),  # !
-        ('hidden5', layers.DenseLayer),
+
         ('output', layers.DenseLayer),
         ],
     input_shape=(None, 1, 96, 96),
-    conv1_num_filters=32, conv1_filter_size=(3, 3), pool1_pool_size=(2, 2),
-    dropout1_p=0.1,  # !
-    conv2_num_filters=64, conv2_filter_size=(2, 2), pool2_pool_size=(2, 2),
-    dropout2_p=0.2,  # !
-    conv3_num_filters=128, conv3_filter_size=(2, 2), pool3_pool_size=(2, 2),
-    dropout3_p=0.3,  # !
-    hidden4_num_units=500,
-    dropout4_p=0.5,  # !
-    hidden5_num_units=500,
+    conv1_num_filters=64, conv1_filter_size=(3, 3),
+    pool1_pool_size=(4, 4),
+    dropout1_p=0.3,  # !
+    conv2_num_filters=128, conv2_filter_size=(2, 2),
+    pool2_pool_size=(2, 2),
+    
+    dropout2_p=0.4,  # !
+    hidden4_num_units=250,  hidden4_nonlinearity=nonlinearities.tanh,
+
     output_num_units=30, output_nonlinearity=None,
 
     update_learning_rate=theano.shared(float32(0.03)),
@@ -234,7 +232,8 @@ net6 = NeuralNet(
         AdjustVariable('update_learning_rate', start=0.03, stop=0.0001),
         AdjustVariable('update_momentum', start=0.9, stop=0.999),
         ],
-    max_epochs=1500,
+    #objective_l2=0.0002,
+    max_epochs=2000,
     verbose=1,
     )
 
@@ -243,35 +242,34 @@ net6 = NeuralNet(
 #print("images loaded")
 #net6.fit(X, y)
 
-#with open('net_kaggle_tutorial.pickle', 'wb') as f:
+#with open('net_conv2_biggerPooling_tanh_noReg_lessHidden.pickle', 'wb') as f:
 #    pickle.dump(net6, f, -1)
  
 
 
 
-NET_NAME = 'net_kaggle_tutorial'
+NET_NAME = 'net_conv2_biggerPooling_tanh_noReg_lessHidden'
 
 def load_neural_network(path):
     with open(path, 'rb') as f:
         nnet = pickle.load(f)
     return nnet
 nnet = load_neural_network(NET_NAME + '.pickle')
-#print(nnet.layers_[1].get_params()[0].get_value())
+
 
 orl_faces = OrlFaces()
 orl_faces.laod_orl_faces_2d_np_arr()
+
 orl_faces.make_orl_predictions(nnet)
 orl_faces.save_orl_predictions('pred_' + NET_NAME + '.csv')
 
-
 orl_faces.load_orl_keypoints("C:/Users/Michal/Documents/Visual Studio 2013/Projects/faceFeaturesMarker/faceFeaturesMarker/orl_faces_keypoints.csv")
-orl_faces.load_orl_predictions('pred_' + NET_NAME + '.csv')
+###orl_faces.load_orl_predictions('pred_' + NET_NAME + '.csv')
 print(orl_faces.calculate_total_error())
-
+print(nnet.train_history_[-1])
 orl_faces.plot_orl_predictions()
-orl_faces.save_rearranged_keypoints_and_predictions(net_name=NET_NAME)
-##orl_faces.calculate_prediction_errors()
-##print(orl_faces.orl_faces_reshaped.shape)
+###orl_faces.save_rearranged_keypoints_and_predictions(net_name=NET_NAME)
+
 
 
 

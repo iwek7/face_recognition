@@ -134,19 +134,15 @@ class OrlFaces():
     def make_orl_predictions(self, nnet, reshaped = True):
         if reshaped:
             self.orl_predictions = nnet.predict(self.orl_faces_reshaped)
-            #print(self.orl_predictions.shape)
         else:
             self.orl_predictions = nnet.predict(self.orl_faces)      
 
     def save_orl_predictions(self, path):
-        keypoints_column_names = [keypoint + '_' + coor 
-                                            for keypoint in self.KEYPOINT_NAMES 
-                                            for coor in ('X','Y')]
         index = ['Row'+str(i) for i in range(1, len(self.orl_predictions)+1)]
         output_df = pd.DataFrame(
             data = self.orl_predictions,
             index = index,
-            columns = keypoints_column_names)
+            columns = self.FULL_REARRANGED_KEYPOINTS)
 
         # add columns with person and image indexing
         #img_indices = [i for j in range(self.NUM_PPL) 
@@ -171,7 +167,7 @@ class OrlFaces():
         for i in range(start_index,start_index+limit):
             ax = fig.add_subplot(4, 4, i - start_index + 1, xticks=[], yticks=[])
             if reshaped:
-                self.plot_sample(self.orl_faces_reshaped[i], self.orl_predictions.values[i], ax)
+                self.plot_sample(self.orl_faces_reshaped[i][0], self.orl_predictions[i], ax)
             else:
                 self.plot_sample(self.orl_faces[i], self.orl_predictions[i], ax)
         pyplot.show()
@@ -188,7 +184,6 @@ class OrlFaces():
          numpy.savetxt(path + net_name + "_keypoints_rearranged.csv", y, delimiter=",")
          numpy.savetxt(path + net_name + "_predictions_rearranged.csv", self.orl_predictions, delimiter=",")
 
-
     def load_orl_predictions(self, path):
         self.orl_predictions = pd.DataFrame.from_csv(path)
 
@@ -197,60 +192,6 @@ class OrlFaces():
         y = (y - 48) / 48
         print(mean_squared_error(self.orl_predictions, y))
         return numpy.sqrt(mean_squared_error(self.orl_predictions, y)) * 48
-
-    def calculate_prediction_errors(self):   
-        #print(list(self.orl_keypoints.columns.values))
-         # add columns with person and image indexing
-        img_indices = [i for j in range(self.NUM_PPL) 
-                            for i in range(self.NUM_IMAGES)]
-
-        ppl_indices = [j for j in range(self.NUM_PPL) 
-                            for i in range(self.NUM_IMAGES)]
-
-
-        keypoints_column_names = [keypoint + '_' + coor 
-                                            for keypoint in self.KEYPOINT_NAMES 
-                                            for coor in ('X','Y')]
-        self.MSE_table = pd.DataFrame(columns = keypoints_column_names)
-        self.MSE_table['person'] = ppl_indices
-        self.MSE_table['image'] = img_indices
-
-
-
-        self.orl_predictions = self.orl_predictions.sort_values(by=['person','image'])
-        self.orl_keypoints = self.orl_keypoints.sort_values(by=['person','image'])
-
-        for col in keypoints_column_names:
-            self.MSE_table[col] = (self.orl_keypoints[col] - self.orl_predictions[col])**2
-
-            
-        # tu zle
-        #self.MSE_table.loc[self.MSE_table['person'] == 1, 'LEFT_EYE_MIDDLE'] = 11
-
-
-        #self.MSE_table = self.orl_predictions - self.orl_keypoints
-
-
-        # index = ['Row'+str(i) for i in range(1, len(self.orl_predictions)+1)]
-        # predictions_df = pd.DataFrame(
-        #     data = self.orl_predictions,
-        #     index = index,
-        #     columns = keypoints_column_names)
-        # predictions_df['person'] = ppl_indices
-        # predictions_df['image'] = img_indices
-
-        # for person_num in range(self.NUM_PPL):
-        #     for img_num in range(self.NUM_IMAGES):
-        #         for keypoit in self.KEYPOINT_NAMES:
-        #             self.MSE_table.loc[self.MSE_table['person'] == person_num and 
-        #                                self.MSE_table['image'] == img_num, 
-        #                                keypoit] = (
-        #              predictions_df.loc[predictions_df['person'] == person_num and 
-        #                                predictions_df['image'] == img_num][keypoit] -
-        #              self.orl_keypoints[ self.orl_keypoints['person'] == person_num and 
-        #                                 sself.orl_keypoints['image'] == img_num][keypoit]) ** 2
-
-
 
 #orl_faces_reshaped = get_orl_faces_2d_np_arr("C:/Users/Michal/Documents/magisterka/dane/orl_faces/")
 #nnet = load_neural_network('net3.pickle')

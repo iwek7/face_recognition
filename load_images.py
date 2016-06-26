@@ -3,8 +3,8 @@ import numpy as np
 from pandas.io.parsers import read_csv
 from sklearn.utils import shuffle
 
-FTRAIN = 'C:/Users/iwek/Documents/magisterka/dane/training.csv'
-FTEST = 'C:/Users/iwek/Documents/magisterka/dane/test.csv'
+FTRAIN = 'C:/Users/Michal/Documents/magisterka/dane/training.csv'
+FTEST = 'C:/Users/Michal/Documents/magisterka/dane/test.csv'
 
 # to cudo zwracawielowymiarowy array numpy
 def load(test=False, cols=None):
