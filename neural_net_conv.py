@@ -20,17 +20,14 @@ from matplotlib import pyplot
 from orl_faces import OrlFaces
 
 from load_images import load, load2d
-from neuralNetVisualizations import plot_feature_maps
+
 
 def float32(k):
     return np.cast['float32'](k)
 
-def plot_sample(x, y, axis):
-    img = x.reshape(96, 96)
-    axis.imshow(img, cmap='gray')
-    axis.scatter(y[0::2] * 48 + 48, y[1::2] * 48 + 48, marker='x', s=10)
 
 class CustBatchIterator(BatchIterator):
+    
     flip_indices = [
         (0, 2), (1, 3),
         (4, 8), (5, 9), (6, 10), (7, 11),
@@ -40,7 +37,7 @@ class CustBatchIterator(BatchIterator):
     
     # pusta przestrzen ktora pojawila sie po obrocie lub przesunieciu obrazka
     # jest zapelniana ta wartoscia
-    empty_space_fill = 0
+    EMPTY_SPACE_FILL = 0
       
     # zwraca lustrzane odbicie tablicy oraz punktow na niej
     def get_mirror_image(self,Xb, yb, changed_indices):
@@ -57,6 +54,7 @@ class CustBatchIterator(BatchIterator):
         return Xb, yb
     
     # rotation_range to zakres losowej rotacji
+    # nie uzywam 
     def apply_rotation(self, Xb, yb, changed_indices, rotation_max_angle = 30):
    
         Xb_cols = Xb.shape[2]
@@ -116,6 +114,7 @@ class CustBatchIterator(BatchIterator):
         return Xb, yb
 
     # przesuwa obrazek ku dolowi
+    # nie uzywam - slabe efekty
     def offset_image(self, Xb, yb, changed_indices, max_offset = 15):
         offset = np.random.randint(max_offset)
         Xb_cols = Xb.shape[2]
@@ -132,7 +131,7 @@ class CustBatchIterator(BatchIterator):
                yb[index] = (yb_trans - 48) / 48
                
         empty_arr = np.empty((offset, Xb_cols))
-        empty_arr.fill(self.empty_space_fill)
+        empty_arr.fill(self.EMPTY_SPACE_FILL)
         
 
         for xb_value, index in zip( Xb[changed_indices], changed_indices):
@@ -142,7 +141,7 @@ class CustBatchIterator(BatchIterator):
         return Xb, yb
                                       
         
-        
+    # transformuje paczke danych na poczatku iteracji algorytmu uczacego na poczatku treningu     
     def transform(self, Xb, yb):
         Xb, yb = super(CustBatchIterator, self).transform(Xb, yb)
         
@@ -163,26 +162,10 @@ class CustBatchIterator(BatchIterator):
         #offset_indices = np.array([i for i in range(128)])
         # Xb, yb = self.offset_image(Xb, yb, offset_indices)        
 
-        #
-        #fig = pyplot.figure(figsize=(6, 6))
-        #fig.subplots_adjust(
-        #    left=0, right=1, bottom=0, top=1, hspace=0.05, wspace=0.05)
-        #a = 0
-        #print("/n/n/n newline /n/n")
-        #for i in range(a,a+16):
-        #    ax = fig.add_subplot(4, 4, i - a + 1, xticks=[], yticks=[])
-        #    plot_sample(Xb[i], yb[i], ax)
-        #    print(Xb.shape)
-        #    print(yb.shape)
-        #
-   
-       
-            
-        #pyplot.show()
-
-
         return Xb, yb
 
+# zmienia learning rate w czasie uczenia
+# nie uzywam, poprawa jest niewielka na moim zbiorze testowym
 class AdjustVariable(object):
     def __init__(self, name, start=0.03, stop=0.001):
         self.name = name
@@ -197,7 +180,7 @@ class AdjustVariable(object):
         new_value = float32(self.ls[epoch - 1])
         getattr(nn, self.name).set_value(new_value)
 
-net6 = NeuralNet(
+net = NeuralNet(
     layers=[
         ('input', layers.InputLayer),
         ('conv1', layers.Conv2DLayer),
@@ -208,19 +191,19 @@ net6 = NeuralNet(
         ('dropout2', layers.DropoutLayer), 
         
         ('hidden4', layers.DenseLayer),
-
+        ('hidden5', layers.DenseLayer),
         ('output', layers.DenseLayer),
         ],
     input_shape=(None, 1, 96, 96),
     conv1_num_filters=64, conv1_filter_size=(3, 3),
     pool1_pool_size=(4, 4),
-    dropout1_p=0.3,  # !
+    dropout1_p=0.3, 
     conv2_num_filters=128, conv2_filter_size=(2, 2),
     pool2_pool_size=(2, 2),
     
-    dropout2_p=0.4,  # !
-    hidden4_num_units=250,  hidden4_nonlinearity=nonlinearities.tanh,
-
+    dropout2_p=0.4, 
+    hidden4_num_units=1000,  hidden4_nonlinearity=nonlinearities.tanh,
+    hidden5_num_units=1000,  hidden5_nonlinearity=nonlinearities.tanh,
     output_num_units=30, output_nonlinearity=None,
 
     update_learning_rate=theano.shared(float32(0.03)),
@@ -232,30 +215,36 @@ net6 = NeuralNet(
         AdjustVariable('update_learning_rate', start=0.03, stop=0.0001),
         AdjustVariable('update_momentum', start=0.9, stop=0.999),
         ],
-    #objective_l2=0.0002,
-    max_epochs=2000,
+    objective_l2=0.0002,
+    max_epochs=5000,
     verbose=1,
     )
 
-#X, y = load2d()  
-#print(y.shape)
-#print("images loaded")
-#net6.fit(X, y)
+X, y = load2d()  
 
-#with open('net_conv2_biggerPooling_tanh_noReg_lessHidden.pickle', 'wb') as f:
-#    pickle.dump(net6, f, -1)
+net.fit(X, y)
+
+
+NET_NAME = 'net_conv2_biggerPooling_tanh_Reg_moreHidden'
+
+with open(NET_NAME + '.pickle', 'wb') as f:
+    pickle.dump(net, f, -1)
  
 
+# wczytanie pliku
+
+#NET_NAME = 'net_conv2_biggerPooling_tanh_Reg_moreHidden'
+
+#def load_neural_network(path):
+#    with open(path, 'rb') as f:
+#        nnet = pickle.load(f)
+#    return nnet
+#nnet = load_neural_network(NET_NAME + '.pickle')
 
 
-NET_NAME = 'net_conv2_biggerPooling_tanh_noReg_lessHidden'
 
-def load_neural_network(path):
-    with open(path, 'rb') as f:
-        nnet = pickle.load(f)
-    return nnet
-nnet = load_neural_network(NET_NAME + '.pickle')
 
+# liczenie bledu
 
 orl_faces = OrlFaces()
 orl_faces.laod_orl_faces_2d_np_arr()
@@ -273,11 +262,7 @@ orl_faces.plot_orl_predictions()
 
 
 
-
-##nnet.save_params_to('net_kaggle_tutorial_params.pickle')
-##plot_feature_maps('net_kaggle_tutorial_params.pickle', 'conv3', (12,12))
-
-
+# plotowanie wykresu bledow vs epoka treningowa 
 
 #train_loss = np.array([i["train_loss"] for i in nnet.train_history_])
 #valid_loss = np.array([i["valid_loss"] for i in nnet.train_history_])
