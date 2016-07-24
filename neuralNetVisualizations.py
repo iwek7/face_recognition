@@ -8,10 +8,28 @@ def load_weights(weights_path):
         weights = pickle.load(f)
     return weights
 
+NET_NAME = 'net_conv2_bigger_pooling_tanh_no_reg'
+def load_neural_network(path):
+    with open(path, 'rb') as f:
+        nnet = pickle.load(f)
+    return nnet
+nnet = load_neural_network(NET_NAME + '.pickle')
+
+def plot_training_history(nnet):
+    train_loss =  np.sqrt(np.array([i["train_loss"] for i in nnet.train_history_])) * 48
+    valid_loss = np.sqrt(np.array([i["valid_loss"] for i in nnet.train_history_])) * 48
+    plt.plot(train_loss, linewidth=3, label="train")
+    plt.plot(valid_loss, linewidth=3, label="valid")
+    plt.grid()
+    plt.legend()
+    plt.xlabel("epoch")
+    plt.ylabel("loss")
+    plt.ylim(1, 6)
+    plt.show()
+
 
 def plot_feature_maps(weights_path, layer_name, figsize = (6, 6)):
     weights = load_weights(weights_path)
-    print(weights[layer_name][0].shape)
     nrows  = weights[layer_name][0].shape[2]
     ncols = weights[layer_name][0].shape[3]
     figs, axes = plt.subplots(figsize[0], figsize[1], figsize=figsize, squeeze=False)
@@ -35,7 +53,7 @@ def get_layer_output2(net, layer, input):
 
 
 def plot_pool_layer_output(net, layer_index, input, figsize = (8, 8),):
-    fig = pyplot.figure(figsize = figsize)
+    fig = plt.figure(figsize = figsize)
     fig.subplots_adjust(
         left=0, right=1, bottom=0, top=1, hspace=0.05, wspace=0.05)
     layer_output = get_layer_output(net, layer_index, input)
@@ -43,10 +61,10 @@ def plot_pool_layer_output(net, layer_index, input, figsize = (8, 8),):
     for image_id in range(layer_output.shape[0]):
         ax = fig.add_subplot(figsize[0], figsize[1], image_id + 1,  xticks=[], yticks=[])
         ax.imshow(layer_output[image_id], cmap='gray')
-    pyplot.show()
+    plt.show()
 
-def plot_conv_layer_output(net, layer_index, input, figsize = (8, 8),):
-    fig = pyplot.figure(figsize = figsize)
+def plot_conv_layer_output(net, layer_index, input, figsize = (8, 8)):
+    fig = plt.figure(figsize = figsize)
     fig.subplots_adjust(
         left=0, right=1, bottom=0, top=1, hspace=0.05, wspace=0.05)
     layer_output = get_layer_output(net, layer_index, input)
@@ -54,7 +72,7 @@ def plot_conv_layer_output(net, layer_index, input, figsize = (8, 8),):
     for image_id in range(layer_output.shape[1]):
         ax = fig.add_subplot(figsize[0], figsize[1], image_id + 1,  xticks=[], yticks=[])
         ax.imshow(layer_output[0][image_id], cmap='gray')
-    pyplot.show()
+    plt.show()
 
 ####
 ###
@@ -67,10 +85,9 @@ def plot_conv_layer_output(net, layer_index, input, figsize = (8, 8),):
 #orl_faces = OrlFaces()
 #orl_faces.laod_orl_faces_2d_np_arr()
 
-#from analityka import plot_pool_layer_output, plot_conv_layer_output, get_layer_output
+
 #input =  orl_faces.orl_faces_reshaped[0:1,:,:,:].astype('float64')
 #output_conv1 = get_layer_output(nnet, 1, input)
-
 
 
 #output_pool1 = get_layer_output(nnet, 2, output_conv1[0])
