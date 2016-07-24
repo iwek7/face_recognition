@@ -247,63 +247,63 @@ nnet = load_neural_network(NET_NAME + '.pickle')
 
 # liczenie bledu
 
-#orl_faces = OrlFaces()
-#orl_faces.laod_orl_faces_2d_np_arr()
+orl_faces = OrlFaces()
+orl_faces.laod_orl_faces_2d_np_arr()
 
-#orl_faces.make_orl_predictions(nnet)
-#orl_faces.save_orl_predictions('pred_' + NET_NAME + '.csv')
+orl_faces.make_orl_predictions(nnet)
+orl_faces.save_orl_predictions('pred_' + NET_NAME + '.csv')
 
-#orl_faces.load_orl_keypoints("C:/Users/Michal/Documents/Visual Studio 2013/Projects/faceFeaturesMarker/faceFeaturesMarker/orl_faces_keypoints.csv")
-####orl_faces.load_orl_predictions('pred_' + NET_NAME + '.csv')
-#print(orl_faces.calculate_total_error())
-#print(nnet.train_history_[-1])
-#orl_faces.plot_orl_predictions()
-###orl_faces.save_rearranged_keypoints_and_predictions(net_name=NET_NAME)
+orl_faces.load_orl_keypoints("C:/Users/Michal/Documents/Visual Studio 2013/Projects/faceFeaturesMarker/faceFeaturesMarker/orl_faces_keypoints.csv")
+###orl_faces.load_orl_predictions('pred_' + NET_NAME + '.csv')
+print(orl_faces.calculate_total_error())
+print(nnet.train_history_[-1])
+orl_faces.plot_orl_predictions()
+##orl_faces.save_rearranged_keypoints_and_predictions(net_name=NET_NAME)
 
 
 
 
 # plotowanie historii uczenia
-#from neuralNetVisualizations import plot_training_history
+#from neural_net_visualizations import plot_training_history
 #plot_training_history(nnet)
 
 
 # plotowanie feature map
 #nnet.save_params_to(NET_NAME + '_weights.pickle')
-#from neuralNetVisualizations import plot_feature_maps
+#from neural_net_visualizations import plot_feature_maps
 #plot_feature_maps(NET_NAME + '_weights.pickle', 'conv2', (12,11))
 
 
 # przepuszczanie twarzy przez siec
 
-from neuralNetVisualizations import plot_conv_layer_output
-from neuralNetVisualizations import get_layer_output
-from neuralNetVisualizations import plot_pool_layer_output
+#from neural_net_visualizations import plot_conv_layer_output
+#from neural_net_visualizations import get_layer_output
+#from neural_net_visualizations import plot_pool_layer_output
 
-orl_faces = OrlFaces()
-orl_faces.laod_orl_faces_2d_np_arr()
-input =  orl_faces.orl_faces_reshaped[0:1,:,:,:].astype('float64')
-#plot_conv_layer_output(nnet, 1, input) # conv1
-
-
-
-# conv1
-output_conv1 = get_layer_output(nnet, 1, input)
-plot_conv_layer_output(nnet, 1, input) 
+#orl_faces = OrlFaces()
+#orl_faces.laod_orl_faces_2d_np_arr()
+#input =  orl_faces.orl_faces_reshaped[0:1,:,:,:].astype('float64')
+##plot_conv_layer_output(nnet, 1, input) # conv1
 
 
-# pool1
-plot_pool_layer_output(nnet, 2, output_conv1[0], (8,8))
 
-output_pool1 = get_layer_output(nnet, 2, output_conv1[0])
-output_pool1_reshaped = np.zeros(shape=(1,64,23,23))
-for feature_map in range(output_pool1.shape[0]):
-    output_pool1_reshaped[0][feature_map] = output_pool1[feature_map]
+## conv1
+#output_conv1 = get_layer_output(nnet, 1, input)
+#plot_conv_layer_output(nnet, 1, input) 
 
-# conv2
-output_conv2 = get_layer_output(nnet, 4, output_pool1_reshaped)
-plot_conv_layer_output(nnet, 4, output_pool1_reshaped, (12,11))
 
-# pool2
-output_pool2 = get_layer_output(nnet, 5, output_conv2[0])
-plot_pool_layer_output(nnet, 5, output_conv2[0], (12,11))
+## pool1
+#plot_pool_layer_output(nnet, 2, output_conv1[0], (8,8))
+
+#output_pool1 = get_layer_output(nnet, 2, output_conv1[0])
+#output_pool1_reshaped = np.zeros(shape=(1,64,23,23))
+#for feature_map in range(output_pool1.shape[0]):
+#    output_pool1_reshaped[0][feature_map] = output_pool1[feature_map]
+
+## conv2
+#output_conv2 = get_layer_output(nnet, 4, output_pool1_reshaped)
+#plot_conv_layer_output(nnet, 4, output_pool1_reshaped, (12,11))
+
+## pool2
+#output_pool2 = get_layer_output(nnet, 5, output_conv2[0])
+#plot_pool_layer_output(nnet, 5, output_conv2[0], (12,11))
