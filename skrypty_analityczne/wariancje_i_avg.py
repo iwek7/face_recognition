@@ -28,6 +28,7 @@ for person_num in range(kaggle_y.shape[0]):
         kaggle_y_reshaped[keypoint_num][person_num]=kaggle_y[person_num][keypoint_num]
 
 
+
 kaggle_y = kaggle_y_reshaped
 print((kaggle_y[0]))
 orl_variances = np.zeros(30)
@@ -37,6 +38,10 @@ kaggle_means = np.zeros(30)
 orl_means= np.zeros(30)
 
 i = 0
+
+
+
+
 
 for keypoint in list(orl_faces.orl_keypoints.columns):
 
@@ -58,7 +63,7 @@ def plot_variances():
 
     ax.set_ylabel('Wariancja')
     ax.set_title('Wariancja wspolrzednych w obu zbiorach')
-    print(orl_faces.orl_keypoints.columns[idx])
+
     ax.set_xticks(ind)
     ax.set_xticklabels(orl_faces.orl_keypoints.columns[idx],  rotation='vertical')
 
@@ -78,7 +83,7 @@ def plot_means():
 
     ax.set_ylabel('Srednia')
     ax.set_title('Srednia wartosc wspolrzednych w obu zbiorach')
-    print(orl_faces.orl_keypoints.columns[idx])
+
     ax.set_xticks(ind)
     ax.set_xticklabels(orl_faces.orl_keypoints.columns[idx],  rotation='vertical')
 

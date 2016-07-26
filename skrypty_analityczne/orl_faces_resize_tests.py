@@ -3,7 +3,7 @@ from matplotlib import pyplot
 from orl_faces import OrlFaces
 import numpy as np
 # http://matplotlib.org/users/image_tutorial.html
-## aby to dziaÅ‚aÅ‚o trzeba wyÅ‚Ä…czyÄ‡ resize w ladowaniu orl faces
+## aby to dziaÅ?aÅ?o trzeba wyÅ?Ä?czyÄ? resize w ladowaniu orl faces
 orl_faces = OrlFaces()
 orl_faces.load_orl_faces()
 

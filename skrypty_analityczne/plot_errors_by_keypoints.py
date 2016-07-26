@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 
 
-NET_NAME = 'net_conv2_bigger_pooling_tanh_no_reg'
+NET_NAME = 'net_conv2_even_bigger_pooling_tanh_no_reg_bigger_conv_less_dropout'
 
 # load data from saved files
 orl_faces = OrlFaces()

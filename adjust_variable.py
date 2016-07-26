@@ -1,6 +1,7 @@
 
 import numpy as np
-
+def float32(k):
+    return np.cast['float32'](k)
 # zmienia learning rate i momentum w czasie uczenia
 # nie uzywam, poprawa jest niewielka na moim zbiorze testowym
 

@@ -190,8 +190,20 @@ class OrlFaces():
     def calculate_total_error(self):
         y = self.orl_keypoints.values.astype('float64')
         y = (y - 48) / 48
-        print(mean_squared_error(self.orl_predictions, y))
+        
         return numpy.sqrt(mean_squared_error(self.orl_predictions, y)) * 48
+
+    def calculate_error_by_keypoints(self):
+        y = self.orl_keypoints.values.astype('float64')
+        y = (y - 48) / 48
+
+        list_of_errors = numpy.zeros(shape=y.shape[1])
+        for keypoint in range(y.shape[1]):
+            list_of_errors[keypoint] = numpy.sqrt(mean_squared_error(
+                                    y[:,keypoint], 
+                                    self.orl_predictions.values[:,keypoint]
+                                    )) * 48
+        return list_of_errors
 
 #orl_faces_reshaped = get_orl_faces_2d_np_arr("C:/Users/Michal/Documents/magisterka/dane/orl_faces/")
 #nnet = load_neural_network('net3.pickle')
